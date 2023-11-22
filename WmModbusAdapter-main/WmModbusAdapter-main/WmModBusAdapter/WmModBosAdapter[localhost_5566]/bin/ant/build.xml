@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+
+	<project name="Adapter using ADK" default="deploy" basedir=".">
+		<property file="build.properties" />
+		<!-- classes belonging to this package -->
+		<path id="this.package.classpath">
+			<fileset dir="${server.home}/instances/${instance_name}/packages/${package}/">
+				<include name="code/classes"/>
+			</fileset>
+		</path>
+
+		<!-- All classes that need to be found by this script -->
+		<path id="total.classpath">
+			<pathelement location="${server.home}/instances/${instance_name}/packages/WmART/code/jars/wmart.jar"/>
+			<pathelement location="${server.home}/lib/wm-isserver.jar"/>
+			<pathelement location="${webM.home}/common/lib/wm-isclient.jar"/>
+			<pathelement location="${webM.home}/common/lib/glassfish/gf.jakarta.resource.jar"/>
+			<pathelement location="${server.home}/instances/${instance_name}/packages/WmART/code/classes/"/>		
+			<path refid="this.package.classpath"/>
+		</path>
+  <!-- Compile the java files of this package -->
+	<target name="createclasses" depends="init">
+		<echo>Creating classes</echo>
+		<mkdir dir="${destdir}/"/>
+		<javac debug="${debug}" optimize="${optimize}"
+			deprecation="${deprecation}" srcdir="${srcdir}"
+			destdir="${destdir}">
+			<classpath>
+				<path refid="total.classpath"/>
+			</classpath>
+		</javac>
+	</target>
+
+	<!-- Execute jcode -->
+	<target name="execjcode" depends="createclasses">
+		<echo>Deploying classes</echo>
+		<exec executable="${server.home}/instances/${instance_name}/bin/jcode"
+				vmlauncher="false" failonerror="true">
+			<arg value="fragall" />
+			<arg value="${package}" />
+		</exec>
+	</target>
+
+	<!-- delete .class files built in this package -->
+	<target name="cleanclasses">
+		<echo>Cleaning classes</echo>
+		<mkdir dir="${destdir}"/>
+		<delete quiet="false">
+			<fileset dir="${destdir}" includes="**/*.class"/>
+		</delete>
+	</target>
+	
+	<!-- if this package depends on classes found in other packages,
+		add targets to build those classes here. -->
+	<target name="init">
+		<tstamp/>
+	</target>	
+	
+	<target name="packageDependencies" depends="" />
+	<target name="clean" depends="cleanclasses" />
+	<target name="classes" depends="cleanclasses, createclasses" />
+	<target name="deploy" depends="execjcode" />
+	<target name="all" depends="packageDependencies, cleanclasses, execjcode" />
+	<target name="remake" depends="packageDependencies, cleanclasses, createclasses" />
+
+</project>
